@@ -92,6 +92,21 @@ func TestMakeJPEGThumbnail_DefaultsInvalidMaxWidth(t *testing.T) {
 	}
 }
 
+func TestNativeLinkPreviewUsesDesktopCompatibleMetadata(t *testing.T) {
+	message := newNativeLinkPreviewMessage(
+		&LinkStruct{Text: "Oferta https://example.com/oferta", Title: "Promo dos Amigos", Description: "Toque para abrir a oferta"},
+		"https://example.com/oferta",
+		[]byte("thumbnail"),
+	)
+	preview := message.GetExtendedTextMessage()
+	if preview.GetPreviewType() != 0 {
+		t.Fatalf("expected preview type NONE for Web/Desktop compatibility, got %v", preview.GetPreviewType())
+	}
+	if preview.GetMediaKeyTimestamp() <= 0 {
+		t.Fatal("expected a media key timestamp for the uploaded link thumbnail")
+	}
+}
+
 func TestMakePDFThumbnail_InvalidInputReturnsNil(t *testing.T) {
 	// With or without pdftoppm installed, garbage input must never panic and
 	// must yield nil so the caller falls back to sending without a preview.
