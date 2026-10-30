@@ -314,6 +314,12 @@ func (w whatsmeowService) StartClient(cd *ClientData) {
 		}
 	}
 
+	if !beginClientStart(cd.Instance.Id) {
+		w.loggerWrapper.GetLogger(cd.Instance.Id).LogWarn("[%s] Client is already starting, skipping duplicate start", cd.Instance.Id)
+		return
+	}
+	defer endClientStart(cd.Instance.Id)
+
 	var container *sqlstore.Container
 
 	if w.config.WaDebug != "" {
@@ -413,6 +419,7 @@ func (w whatsmeowService) StartClient(cd *ClientData) {
 	client := whatsmeow.NewClient(deviceStore, clientLog)
 
 	w.clientPointer[cd.Instance.Id] = client
+	endClientStart(cd.Instance.Id)
 
 	if cd.IsProxy {
 		var proxyConfig ProxyConfig
