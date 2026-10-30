@@ -46,6 +46,7 @@ func sharedSQLStoreContainer(ctx context.Context, dialect, address string, log w
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(2)
 	db.SetConnMaxIdleTime(5 * time.Minute)
+	db.SetConnMaxLifetime(30 * time.Minute)
 
 	container := sqlstore.NewWithDB(db, dialect, log)
 	if err := container.Upgrade(ctx); err != nil {
