@@ -2072,6 +2072,16 @@ func (mycli *MyClient) myEventHandler(rawEvt interface{}) {
 		} else {
 			mycli.loggerWrapper.GetLogger(mycli.userID).LogWarn("[%s] ID is not 66 or 67 or view_once, skipping", mycli.userID)
 		}
+	case *events.ClientOutdated:
+		mycli.loggerWrapper.GetLogger(mycli.userID).LogError("[%s] WhatsApp rejected client version %s as outdated (405)", mycli.userID, store.GetWAVersion())
+		if refreshWAVersion(mycli.loggerWrapper) && mycli.WAClient.Store.ID != nil {
+			go func() {
+				if err := mycli.WAClient.Connect(); err != nil {
+					mycli.loggerWrapper.GetLogger(mycli.userID).LogError("[%s] Error reconnecting with updated version: %s", mycli.userID, err)
+				}
+			}()
+		}
+		return
 	default:
 		mycli.loggerWrapper.GetLogger(mycli.userID).LogWarn("[%s] Unhandled event %s: %+v", mycli.userID, fmt.Sprintf("%T", evt), evt)
 		return
@@ -2816,6 +2826,8 @@ func NewWhatsmeowService(
 ) WhatsmeowService {
 	// Inicializar PollService de forma segura
 	pollSvc := poll_service.NewPollService(authDB, loggerWrapper)
+
+	startWAVersionRefresher(loggerWrapper)
 
 	return &whatsmeowService{
 		instanceRepository: instanceRepository,
